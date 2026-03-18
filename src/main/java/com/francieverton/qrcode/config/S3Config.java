@@ -19,6 +19,7 @@ public class S3Config {
                 .region(Region.US_EAST_1)
                 .credentialsProvider(StaticCredentialsProvider.create(
                         AwsBasicCredentials.create("teste", "teste")))
+                .forcePathStyle(true)
                 .build();
     }
 }
