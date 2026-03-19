@@ -1,79 +1,72 @@
-# 📱 Microserviço Gerador de QR Code (Spring Boot + AWS S3)
+# Gerador de QR Code com Spring Boot e AWS S3 (LocalStack)
 
-![Java](https://img.shields.io/badge/java-%23ED8B00.svg?style=for-the-badge&logo=openjdk&logoColor=white)
-![Spring](https://img.shields.io/badge/spring-%236DB33F.svg?style=for-the-badge&logo=spring&logoColor=white)
-![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+Uma API RESTful desenvolvida em Java com Spring Boot que gera imagens de QR Code a partir de textos/URLs e faz o upload automático para um bucket S3. O projeto utiliza o **LocalStack** e o **Docker Compose** para emular o ambiente da AWS localmente, facilitando o desenvolvimento e os testes sem gerar custos na nuvem.
 
-## 🎯 Finalidade do Projeto
-Este projeto é uma API REST desenvolvida em Java com Spring Boot que atua como um microserviço de geração de QR Codes. 
-O sistema recebe uma URL via requisição HTTP, converte esse link em uma imagem de QR Code (utilizando a biblioteca Google ZXing) e realiza o upload automático dessa imagem para um bucket no **Amazon S3**, retornando o link público gerado para o usuário.
+## 🚀 Tecnologias Utilizadas
 
-A arquitetura foi desenhada com foco em **Clean Architecture (Ports and Adapters)**, garantindo que a regra de negócio seja totalmente isolada da infraestrutura de nuvem.
+* **Java 25**
+* **Spring Boot 4.0.3**
+* **AWS SDK for Java** (Integração com S3)
+* **ZXing** (Biblioteca para geração do QR Code)
+* **Docker & Docker Compose**
+* **LocalStack** (Emulação da AWS S3)
 
-> **⚠️ Observação Importante sobre a Nuvem:** > Atualmente, o projeto está configurado para rodar localmente utilizando o **LocalStack** (um emulador de serviços da AWS). Futuramente, a aplicação será conectada à nuvem real da AWS. Graças ao design desacoplado utilizando a interface `StoragePort`, a migração para produção exigirá apenas a exclusão da classe de configuração local, sem a necessidade de alterar uma única linha da regra de negócio.
+## 📋 Pré-requisitos
 
----
+Antes de começar, certifique-se de ter as seguintes ferramentas instaladas na sua máquina:
 
-## 🛠️ Tecnologias Utilizadas
-* **Java 17+**
-* **Spring Boot 3**
-* **Google ZXing** (Para processamento e geração da matriz do QR Code)
-* **AWS SDK for Java v2** (Integração com o S3)
-* **Docker & LocalStack** (Emulação da infraestrutura AWS localmente)
-* **AWS CLI** (Para criação do bucket local)
-
----
-
-## ⚙️ Pré-requisitos
-Antes de rodar o projeto, você vai precisar ter instalado em sua máquina:
-* [JDK 17 ou superior](https://adoptium.net/)
+* [Java JDK 25+](https://jdk.java.net/)
 * [Maven](https://maven.apache.org/)
-* [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Iniciado e rodando)
-* [AWS CLI](https://aws.amazon.com/pt/cli/)
+* [Docker](https://www.docker.com/) (Docker Desktop rodando)
+* Uma IDE da sua escolha (IntelliJ IDEA, Eclipse, VS Code)
+* Postman ou Insomnia para testar as requisições.
 
----
+## 🛠️ Como executar o projeto
 
-## 🚀 Passo a Passo: Como rodar a aplicação
+### 1. Subindo a infraestrutura (LocalStack S3)
 
-### 1. Subindo a infraestrutura local (LocalStack)
-Abra o seu terminal e inicie o contêiner do LocalStack na porta 4566 usando o Docker:
+O projeto conta com um arquivo `docker-compose.yml` que automatiza a criação do servidor do LocalStack e já cria o bucket S3 necessário (`qrcode-bucket`) automaticamente para você.
+
+Abra o terminal na raiz do projeto e execute:
+
 ```bash
-docker run --rm -d -p 4566:4566 -p 4510-4559:4510-4559 localstack/localstack
+docker-compose up -d
 ```
 
-### 2. Criando o Bucket S3 localmente
-Com o LocalStack rodando, utilize o AWS CLI para criar o bucket falso chamado `qrcode-bucket`:
+> **Nota:** O contêiner de setup criará o bucket automaticamente em segundo plano. Você pode prosseguir para o próximo passo. Para derrubar a infraestrutura após o uso, utilize `docker-compose down`.
+
+### 2. Rodando a Aplicação Spring Boot
+
+Com a infraestrutura de pé, inicie a aplicação Java. Você pode fazer isso diretamente pelo botão de "Play" da sua IDE na classe `QrcodeApplication.java`, ou via terminal executando:
+
 ```bash
-aws --endpoint-url=http://localhost:4566 s3 mb s3://qrcode-bucket
+mvn spring-boot:run
 ```
+A aplicação iniciará na porta padrão `8080`.
 
-### 3. Rodando o Spring Boot
-Faça o clone deste repositório, abra o projeto na sua IDE de preferência (IntelliJ, Eclipse, VS Code) e execute a classe principal `QrcodeApplication.java`. A API estará disponível na porta `8080`.
+## 📌 Como testar a API
 
----
+### Gerar e fazer upload de um QR Code
 
-## 🧪 Testando a API
-Você pode utilizar ferramentas como **Postman** ou **Insomnia** para testar a rota.
+Faça uma requisição **POST** para o endpoint da aplicação (ajuste o corpo da requisição conforme os atributos da sua classe de DTO/Request).
 
-**Endpoint:** `POST http://localhost:8080/qrcode/send`
+* **URL:** `http://localhost:8080/qrcode/send`
+* **Método:** `POST`
+* **Content-Type:** `application/json`
 
-**Corpo da Requisição (JSON):**
+**Exemplo de Corpo da Requisição (JSON):**
 ```json
 {
-  "url": "[https://www.google.com.br](https://www.google.com.br)"
+  "text": "[https://meu-portfolio.com](https://meu-portfolio.com)",
+  "bucket": "qrcode-bucket"
 }
 ```
 
-**Exemplo de Resposta (Status 200 OK):**
-```json
-{
-  "url": "[https://qrcode-bucket.s3.amazonaws.com/5c161cba-ac30-46ea-9d01-e99616ccd45c.png](https://qrcode-bucket.s3.amazonaws.com/5c161cba-ac30-46ea-9d01-e99616ccd45c.png)"
-}
+**Exemplo de Resposta (Sucesso):**
+A API retornará o link direto para você acessar o arquivo gerado dentro do seu LocalStack:
+
+```text
+Copiar e colar no navegador: http://localhost:4566/qrcode-bucket/nome-do-arquivo.png
 ```
-*(Lembrando que, como estamos usando o LocalStack, para visualizar a imagem no navegador você deve acessar: `http://localhost:4566/qrcode-bucket/nome-do-arquivo.png`)*
 
----
-
-## 👨‍💻 Autor
-Desenvolvido por **Francieverton Oliveira**
+Basta copiar a URL fornecida e colar no seu navegador para visualizar ou baixar o QR Code gerado!
