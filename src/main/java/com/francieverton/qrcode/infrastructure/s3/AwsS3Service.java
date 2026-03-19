@@ -26,6 +26,7 @@ public class AwsS3Service implements StoragePort {
 
         s3Client.putObject(request, RequestBody.fromBytes(bytesPNG));
 
-        return "https://" + request.bucket() + ".s3.amazonaws.com/" +fileName;
+        return "Copiar e colar no navegador: " +
+                "http://localhost:4566/" + request.bucket() + "/" + fileName;
     }
 }
